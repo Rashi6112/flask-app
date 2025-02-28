@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Material Processing</title>
+</head>
+<body>
+    <h2>Upload Required Excel Files</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <label>Upload MN01 File:</label>
+        <input type="file" name="mn01" required><br><br>
+        
+        <label>Upload G1_G2 File:</label>
+        <input type="file" name="g1_g2" required><br><br>
+        
+        <label>Upload FLAGGED File:</label>
+        <input type="file" name="flagged" required><br><br>
+        
+        <button type="submit">Process & Download</button>
+    </form>
+</body>
+</html>
