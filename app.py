@@ -76,31 +76,28 @@ def home():
 
 @app.route("/upload", methods=["POST"])
 def upload_files():
-    if 'mn01' not in request.files or 'g1_g2' not in request.files or 'flagged' not in request.files:
+    if 'plant' not in request.files or 'g1_g2' not in request.files or 'flagged' not in request.files:
         return "All three files are required", 400
 
-    mn01 = request.files['mn01']
+    plant = request.files['plant']
     g1_g2 = request.files['g1_g2']
     flagged = request.files['flagged']
 
-    if mn01.filename == '' or g1_g2.filename == '' or flagged.filename == '':
+    if plant.filename == '' or g1_g2.filename == '' or flagged.filename == '':
         return "All files must be selected", 400
 
-    mn01_path = os.path.join(UPLOAD_FOLDER, mn01.filename)
+    plant_path = os.path.join(UPLOAD_FOLDER, plant.filename)
     g1_g2_path = os.path.join(UPLOAD_FOLDER, g1_g2.filename)
     flagged_path = os.path.join(UPLOAD_FOLDER, flagged.filename)
 
-    mn01.save(mn01_path)
+    plant.save(plant_path)
     g1_g2.save(g1_g2_path)
     flagged.save(flagged_path)
 
-    temp_file = consolidate_and_filter_materials(mn01_path)
+    temp_file = consolidate_and_filter_materials(plant_path)
     final_output = remove_matching_rows(temp_file, g1_g2_path, flagged_path)
 
     return send_file(final_output, as_attachment=True)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
-
-
+    app.run(debug=True)

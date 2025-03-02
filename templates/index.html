@@ -1,21 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Material Processing</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Auto-Flagging</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #E0F7FA, #F1E1F5);
+            color: #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 30px;
+            color: #5C5CFF;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+            width: 55%;
+            text-align: center;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .upload-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+            background: #F8F9FA;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .required-star {
+            color: red;
+            font-size: 18px;
+            margin-left: 5px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .browse-btn {
+            font-size: 14px;
+            padding: 12px 18px;
+            border-radius: 8px;
+            background: #5C5CFF;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            transition: 0.3s ease;
+        }
+
+        .browse-btn:hover {
+            background: #4A4AFF;
+        }
+
+        .file-name {
+            flex: 1;
+            font-size: 14px;
+            color: #444;
+            font-weight: 500;
+            text-align: left;
+            margin-left: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .process-btn {
+            background: #FF5C5C;
+            padding: 14px 30px;
+            border-radius: 10px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s ease;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .process-btn:hover {
+            background: #E04444;
+        }
+    </style>
 </head>
 <body>
-    <h2>Upload Required Excel Files</h2>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <label>Upload MN01 File:</label>
-        <input type="file" name="mn01" required><br><br>
-        
-        <label>Upload G1_G2 File:</label>
-        <input type="file" name="g1_g2" required><br><br>
-        
-        <label>Upload FLAGGED File:</label>
-        <input type="file" name="flagged" required><br><br>
-        
-        <button type="submit">Process & Download</button>
-    </form>
+
+    <h1>Inventory Auto-Flagging System</h1>
+
+    <div class="container">
+        <div class="upload-section">
+            <div class="upload-row">
+                <label for="plant">Upload Your Plant Inventory <span class="required-star">*</span></label>
+                <input type="file" id="plant" class="file-input" accept=".xls, .xlsx" onchange="showFileName(this)">
+                <label for="plant" class="browse-btn">Browse</label>
+                <span id="plant-name" class="file-name">No file chosen</span>
+            </div>
+            <div class="upload-row">
+                <label for="g1_g2">Surplus_Obsolete File <span class="required-star">*</span></label>
+                <input type="file" id="g1_g2" class="file-input" accept=".xls, .xlsx" onchange="showFileName(this)">
+                <label for="g1_g2" class="browse-btn">Browse</label>
+                <span id="g1_g2-name" class="file-name">No file chosen</span>
+            </div>
+            <div class="upload-row">
+                <label for="flagged">Old Flagging File <span class="required-star">*</span></label>
+                <input type="file" id="flagged" class="file-input" accept=".xls, .xlsx" onchange="showFileName(this)">
+                <label for="flagged" class="browse-btn">Browse</label>
+                <span id="flagged-name" class="file-name">No file chosen</span>
+            </div>
+            <button class="process-btn" onclick="validateAndProcess()">Process</button>
+        </div>
+    </div>
+
+    <script>
+        function showFileName(input) {
+            let fileName = input.files.length > 0 ? input.files[0].name : "No file chosen";
+            document.getElementById(input.id + "-name").textContent = fileName;
+        }
+
+        function validateAndProcess() {
+            const plant = document.getElementById("plant").files[0];
+            const g1_g2 = document.getElementById("g1_g2").files[0];
+            const flagged = document.getElementById("flagged").files[0];
+
+            if (!plant || !g1_g2 || !flagged) {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Please upload all required files before processing.",
+                    icon: "error",
+                    confirmButtonColor: "#FF5C5C"
+                });
+                return;
+            }
+
+            const allowedExtensions = /(\.xls|\.xlsx)$/i;
+
+            if (!allowedExtensions.test(plant.name) || !allowedExtensions.test(g1_g2.name) || !allowedExtensions.test(flagged.name)) {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Only Excel files (.xls, .xlsx) are allowed.",
+                    icon: "error",
+                    confirmButtonColor: "#FF5C5C"
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: "Processing...",
+                text: "Your inventory is being analyzed!",
+                icon: "info",
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    </script>
+
 </body>
 </html>
+
+
+    
