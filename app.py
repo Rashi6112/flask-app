@@ -10,26 +10,37 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
 def consolidate_and_filter_materials(input_path):
-    df = pd.read_excel(input_path)
-    combine_df = df.groupby('Material Number').agg({
-        'Document Date': 'min',
-        'Material description': 'first',
-        'Quantity': 'sum',
-        'Amount in local curr': 'sum',
+    df = pd.read_excel(input_path, engine='openpyxl')
+
+    # Debugging: Print column names
+    print("Columns in the file:", df.columns)
+
+    # Remove spaces from column names
+    df.columns = df.columns.str.strip()
+
+    # Ensure correct column name mapping
+    if 'Material Code' not in df.columns:
+        raise KeyError("Column 'Material Code' not found in the file. Available columns: " + ", ".join(df.columns))
+
+    combine_df = df.groupby('Material Code').agg({
+        'Last Recpt. Date': 'min',
+        'Material Description': 'first',
+        'ACTUAL QTY': 'sum',
+        'ACTUAL VALUE': 'sum',
         'MRP Type': 'first',
-        'Aging days': 'max'
+        'Aging': 'max'
     }).reset_index()
-    
+
     combine_df.rename(columns={
-        'Document Date': 'Document Date (Oldest)',
-        'Material description': 'Material Description',
-        'Amount in local curr': 'Total Amount in Local Currency',
-        'Aging days': 'Max Aging Days'
+        'Last Recpt. Date': 'Document Date (Oldest)',
+        'Material Description': 'Material Description',
+        'ACTUAL VALUE': 'Total Amount in Local Currency',
+        'Aging': 'Max Aging Days'
     }, inplace=True)
 
     filtered_df = combine_df[combine_df['Max Aging Days'] > 365]
     data = filtered_df[filtered_df['MRP Type'] != 'VB']
-    
+
     temp_file = os.path.join(PROCESSED_FOLDER, 'temp_filtered.xlsx')
     data.to_excel(temp_file, index=False)
     return temp_file
@@ -53,7 +64,7 @@ def remove_matching_rows(temp_file, g1_g2_file, flagged_file):
                 return 'G6'
             else:
                 return 'G7'
-        elif row['MRP Type'] == 'SP' and row['Max Aging Days'] > 1085:
+        elif row['MRP Type'] == 'SP' and row['Max Aging Days'] > 1086:
             return 'G3'
         elif row['MRP Type'] == 'SP' and 365 < row['Max Aging Days'] < 730:
             return 'G9'
@@ -65,6 +76,7 @@ def remove_matching_rows(temp_file, g1_g2_file, flagged_file):
     final_df['Flag_Mismatch'] = final_df['Flag'] != final_df['Flag_from_flagged']
     final_df = final_df[(final_df['Flag_Mismatch']) & (final_df['Flag_from_flagged'] != 'S1')]
     final_df = final_df.drop(columns=['Flag_Mismatch'])
+    final_df = final_df[final_df['ACTUAL QTY'] > 0]
 
     final_output_file = os.path.join(PROCESSED_FOLDER, 'final_output.xlsx')
     final_df.to_excel(final_output_file, index=False)
@@ -100,4 +112,4 @@ def upload_files():
     return send_file(final_output, as_attachment=True)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True)  
