@@ -59,12 +59,12 @@ def remove_matching_rows(temp_file, g1_g2_file, flagged_file):
     def determine_flag(row):
         if row['MRP Type'] in ['ES', 'IA'] and row['Max Aging Days'] > 365:
             return 'G9'
-        elif row['MRP Type'] == 'SP' and 729 < row['Max Aging Days'] < 1085:
+        elif row['MRP Type'] == 'SP' and 729 < row['Max Aging Days'] < 1086:
             if row['Total Amount in Local Currency'] < 10000:
                 return 'G6'
             else:
                 return 'G7'
-        elif row['MRP Type'] == 'SP' and row['Max Aging Days'] > 1086:
+        elif row['MRP Type'] == 'SP' and row['Max Aging Days'] > 1085:
             return 'G3'
         elif row['MRP Type'] == 'SP' and 365 < row['Max Aging Days'] < 730:
             return 'G9'
@@ -112,4 +112,4 @@ def upload_files():
     return send_file(final_output, as_attachment=True)
 
 if __name__ == "__main__":
-    app.run(debug=True)  
+    app.run(debug=True)
